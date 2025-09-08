@@ -1,0 +1,102 @@
+
+sudo apt update && sudo apt install -y openjdk-11-jdk git maven
+
+java -version
+mvn -version
+
+cp ./data/.profile ./
+cp ./data/.bashrc ./
+
+실행 명령어
+docker run -d --name nginx-bind -p 80:80 \
+-v ~/data/niginx/html:/usr/share/nginx/html \
+nginx
+
+볼륨관련
+docker volume create nginx-vol
+
+docker run -d --name nginx-bind -p 80:80 \
+-v nginx-vol:/usr/share/nginx/html \
+nginx
+
+docker volume inspect nginx-vol
+docker volume rm nginx-vol
+
+
+네트워크
+docker network create app-net
+
+docker run -d \
+--name mysql-server \
+--network app-net \
+-p 3306:3306 \
+-v mysql-vol:/var/lib/mysql \
+-e MYSQL_ROOT_PASSWORD=root \
+-e MYSQL_DATABASE=db_file \
+-e MYSQL_USER=goodee \
+-e MYSQL_PASSWORD=goodee \
+mysql:8.0
+
+ docker cp ~/DeployProject/src/main/resources/schema.sql mysql-server:/tmp/schema.sql
+
+
+
+
+===============실행해야될 것================================================
+
+sudo apt update && sudo apt install -y openjdk-11-jdk git maven && \
+docker volume create mysql-vol && \
+docker network create app-net && \
+docker run -d \
+--name mysql-server \
+--network app-net \
+-p 3306:3306 \
+-v mysql-vol:/var/lib/mysql \
+-e MYSQL_ROOT_PASSWORD=root \
+-e MYSQL_DATABASE=db_file \
+-e MYSQL_USER=goodee \
+-e MYSQL_PASSWORD=goodee \
+mysql:8.0 && \
+git clone https://github.com/teacher-min/DeployProject.git && \
+docker run -d \
+--name tomcat-server \
+--network app-net \
+-v /home/goodee/upload:/home/goodee/upload
+-p 8080:8080 \
+tomcat:9
+
+
+vi ~/DeployProject/src/main/webapp/WEB-INF/spring/appServlet/servlet-context.xml
+에서 jdbc url 주소를 mysql-server로 수정
+
+cd ~/DeployProject
+mvn clean package
+
+docker cp ~/DeployProject/target/DeployProject-1.0.0.war tomcat-server:/usr/local/tomcat/webapps/deploy.war
+
+mkdir -p ~/data/nginx/config
+touch ~/data/nginx/config/tomcat-proxy.conf
+vi ~/data/nginx/config/tomcat-proxy.conf
+
+server{
+	listen 80;
+	server_name localhost;
+	location /deploy{
+		proxy_pass http://tomcat-server:8080/deploy;
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+	}
+}
+
+
+docker run -d \
+--name nginx-proxy \
+-p 80:80 \
+--network app-net \
+-v /home/goodee/data/nginx/config:/etc/nginx/conf.d \
+nginx
+
+
+
