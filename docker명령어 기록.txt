@@ -61,7 +61,7 @@ git clone https://github.com/teacher-min/DeployProject.git && \
 docker run -d \
 --name tomcat-server \
 --network app-net \
--v /home/goodee/upload:/home/goodee/upload
+-v /home/goodee/data/upload:/home/goodee/upload \
 -p 8080:8080 \
 tomcat:9
 
@@ -98,5 +98,7 @@ docker run -d \
 -v /home/goodee/data/nginx/config:/etc/nginx/conf.d \
 nginx
 
-
+sudo apt update && sudo apt install -y openjdk-11-jdk git maven && \
+cd ~/DeployProject && \
+mvn clean package
 
