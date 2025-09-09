@@ -1,0 +1,14 @@
+FROM ubuntu:22.04
+
+RUN apt update && apt install -y openjdk-11-jdk wget
+RUN wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.109/bin/apache-tomcat-9.0.109.tar.gz -P /home/tomcat
+RUN tar -xzvf /home/tomcat/apache-tomcat-9.0.109.tar.gz -C /home/tomcat
+
+COPY ./server.xml /home/tomcat/apache-tomcat-9.0.109/conf/server.xml
+COPY ./index.html /home/tomcat/apache-tomcat-9.0.109/webapps/ROOT/index.html
+
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+
+EXPOSE 8080
+
+CMD ["/home/tomcat/apache-tomcat-9.0.109/bin/catalina.sh", "run"]

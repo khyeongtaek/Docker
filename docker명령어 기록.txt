@@ -102,3 +102,94 @@ sudo apt update && sudo apt install -y openjdk-11-jdk git maven && \
 cd ~/DeployProject && \
 mvn clean package
 
+
+
+=====================================9.9
+
+#1
+docker build -t myubuntu1 \
+-f Dockerfile1 \
+/home/goodee/data/dockerfiles/
+
+
+docker run \
+--rm \
+myubuntu1 \
+echo "HERE IS THE HELL WORLD"
+
+#2
+docker build -t myubuntu2 \
+-f Dockerfile2 \
+/home/goodee/data/dockerfiles/
+
+docker run \
+--rm \
+myubuntu2
+
+#3
+docker build --build-arg BUILD_MSG="HELLO WHO" \
+-t myubuntu3 \
+-f Dockerfile3 \
+/home/goodee/data/dockerfiles/ \
+&&
+docker run \
+--rm \
+myubuntu3
+
+
+#4
+docker build --build-arg BUILD_MSG="HELLO WHO" \
+-t myubuntu4 \
+-f Dockerfile4 \
+/home/goodee/data/dockerfiles/ \
+&&
+docker run \
+--rm \
+myubuntu4
+
+
+#5
+docker build \
+-t javaubuntu \
+-f Dockerfile5 \
+/home/goodee/data/dockerfiles/ \
+&&
+docker run \
+--rm \
+javaubuntu
+
+
+#6
+docker build \
+-t tomcatubuntu \
+-f Dockerfile6 \
+/home/goodee/data/dockerfiles/ \
+&&
+docker run -d \
+--name tomcatubuntu \
+-p 8080:8080 \
+tomcatubuntu
+
+
+#7
+docker build \
+-t projectubuntu \
+-f Dockerfile7 \
+/home/goodee/data/dockerfiles/ \
+&&
+docker run -d \
+--name projectubuntu \
+-p 8080:8080 \
+projectubuntu
+
+
+#8
+docker build \
+-t nginx \
+-f Dockerfile8 \
+/home/goodee/data/dockerfiles/ \
+&&
+docker run -d \
+--name nginx \
+-p 80:80 \
+nginx

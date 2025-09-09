@@ -1,0 +1,63 @@
+FROM ubuntu:22.04
+
+RUN apt update && apt install -y openjdk-11-jdk wget git maven mysql-server nginx
+RUN wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.109/bin/apache-tomcat-9.0.109.tar.gz -P /home/tomcat
+RUN tar -xzvf /home/tomcat/apache-tomcat-9.0.109.tar.gz -C /home/tomcat
+
+
+COPY ./server.xml /home/tomcat/apache-tomcat-9.0.109/conf/server.xml
+COPY ./index.html /home/tomcat/apache-tomcat-9.0.109/webapps/ROOT/index.html
+
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+
+# 안될때를 대비해서 남겨놓고 주석처리
+# RUN chown mysql:mysql /var/run/mysqld
+RUN service mysql start && \
+	mysql -e "CREATE DATABASE IF NOT EXISTS db_file;" && \
+	mysql -e "CREATE USER 'goodee'@'localhost' IDENTIFIED BY 'goodee'; " && \
+	mysql -e "GRANT ALL PRIVILEGES ON db_file.* TO 'goodee'@'localhost';" && \
+	mysql -e "FLUSH PRIVILEGES;" && \
+	service mysql stop
+
+
+WORKDIR /tmp
+RUN git clone https://github.com/teacher-min/DeployProject.git
+
+WORKDIR /tmp/DeployProject
+RUN mvn clean package
+
+RUN cp /tmp/DeployProject/target/DeployProject-1.0.0.war /home/tomcat/apache-tomcat-9.0.109/webapps/deploy.war
+
+COPY <<EOF /etc/nginx/conf.d/tomcat-proxy.conf
+server{
+	listen 80;
+	server_name kwonht.synology.me;
+	location /deploy{
+		proxy_pass http://kwonht.synology.me:8080/deploy;
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+	}
+}
+EOF
+
+
+
+EXPOSE 8080 3306 80
+
+COPY <<EOF /home/start.sh
+#!/bin/bash
+echo "START MYSQL-SERVER..."
+service mysql start
+echo "START schema.sql..."
+mysql -u goodee -pgoodee db_file < /tmp/DeployProject/src/main/resources/schema.sql
+echo "START TOMCAT SERVER..."
+/home/tomcat/apache-tomcat-9.0.109/bin/catalina.sh run
+echo "Start Nginx SERVER..."
+nginx -g "daemon off;"
+EOF
+
+RUN chmod a+x /home/start.sh
+
+CMD ["/home/start.sh"]

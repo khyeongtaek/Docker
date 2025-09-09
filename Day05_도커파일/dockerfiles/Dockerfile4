@@ -1,0 +1,9 @@
+FROM ubuntu:22.04
+
+ARG BUILD_MSG
+
+RUN echo 이미지 빌드 시점 : $BUILD_MSG
+
+ENV ENV_MSG=$BUILD_MSG
+
+ENTRYPOINT echo $ENV_MSG
